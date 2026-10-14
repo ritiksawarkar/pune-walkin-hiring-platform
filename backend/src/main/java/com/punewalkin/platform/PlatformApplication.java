@@ -11,6 +11,8 @@ import java.util.TimeZone;
 public class PlatformApplication {
 
     public static void main(String[] args) {
+        // Load .env configuration before Spring Boot boots
+        com.punewalkin.platform.common.config.DotenvLoader.load();
         // Set standard platform timezone to Asia/Kolkata
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
         SpringApplication.run(PlatformApplication.class, args);

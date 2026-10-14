@@ -32,8 +32,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import com.punewalkin.platform.interview.EmailService;
+import com.punewalkin.platform.interview.MailConfig;
+import com.punewalkin.platform.admin.dto.TestEmailRequest;
+import com.punewalkin.platform.common.exception.BadRequestException;
+import jakarta.validation.Valid;
+
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -50,6 +57,9 @@ public class AdminController {
     private final ActivityLogRepository activityLogRepository;
     private final NotificationService notificationService;
     private final DriveService driveService;
+    private final EmailService emailService;
+    private final MailConfig mailConfig;
+    private final ConcurrentHashMap<String, Long> testEmailRateLimiter = new ConcurrentHashMap<>();
 
     public AdminController(UserRepository userRepository,
                            CompanyRepository companyRepository,
@@ -59,7 +69,9 @@ public class AdminController {
                            CandidateProfileRepository candidateProfileRepository,
                            ActivityLogRepository activityLogRepository,
                            NotificationService notificationService,
-                           DriveService driveService) {
+                           DriveService driveService,
+                           EmailService emailService,
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) MailConfig mailConfig) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.driveRepository = driveRepository;
@@ -69,6 +81,8 @@ public class AdminController {
         this.activityLogRepository = activityLogRepository;
         this.notificationService = notificationService;
         this.driveService = driveService;
+        this.emailService = emailService;
+        this.mailConfig = mailConfig;
     }
 
     @GetMapping("/stats")
@@ -120,6 +134,7 @@ public class AdminController {
     }
 
     @GetMapping("/candidates")
+    @Transactional(readOnly = true)
     @Operation(summary = "List candidate registration requests with filtering and search")
     public ResponseEntity<ApiResponse<Page<CandidateAdminResponse>>> listCandidates(
             @RequestParam(required = false, defaultValue = "ALL") String status,
@@ -266,6 +281,7 @@ public class AdminController {
     }
 
     @GetMapping("/candidates/{userId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get candidate registration details by user ID (Admin)")
     public ResponseEntity<ApiResponse<CandidateAdminResponse>> getCandidateById(@PathVariable String userId) {
         User user = userRepository.findById(userId)
@@ -483,6 +499,59 @@ public class AdminController {
         user.setAccountStatus(status);
         userRepository.save(user);
         return ResponseEntity.ok(ApiResponse.success("User status updated", user));
+    }
+
+    @PostMapping("/email/send-test")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Send real SMTP verification test email (Admin only)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> sendTestEmail(
+            @Valid @RequestBody TestEmailRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        // Rate limiting: 5-second cooldown per administrator to protect against mail floods/spam
+        String adminId = principal != null ? principal.getId() : "admin";
+        long now = System.currentTimeMillis();
+        Long lastSent = testEmailRateLimiter.get(adminId);
+        if (lastSent != null && (now - lastSent) < 5000) {
+            long remaining = 5 - ((now - lastSent) / 1000);
+            throw new BadRequestException("Please wait " + remaining + " seconds before sending another test email to prevent SMTP rate limits.");
+        }
+        testEmailRateLimiter.put(adminId, now);
+
+        // Send test email
+        EmailService.EmailDeliveryResult result = emailService.sendDirectTestEmail(
+                request.getRecipientEmail(),
+                request.getSubject(),
+                request.getContent()
+        );
+
+        Map<String, Object> details = new LinkedHashMap<>();
+        details.put("recipientEmail", request.getRecipientEmail().trim());
+        details.put("senderEmail", emailService.getMailFrom());
+        details.put("mailHost", mailConfig != null ? mailConfig.getHost() : "localhost");
+        details.put("mailPort", mailConfig != null ? mailConfig.getPort() : 587);
+        details.put("smtpEnabled", emailService.isMailEnabled());
+        details.put("status", result.getStatus());
+        details.put("success", result.isSuccess());
+        details.put("message", result.getMessage());
+        details.put("timestamp", LocalDateTime.now().toString());
+
+        recordActivity(adminId, "TEST_EMAIL_SENT", "EMAIL", request.getRecipientEmail().trim(),
+                "Administrator Test Email Dispatched",
+                "Delivered test email to " + request.getRecipientEmail().trim() + " with status: " + result.getStatus(),
+                null, result.getStatus(), result.getMessage());
+
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(ApiResponse.success(
+                    "Test email successfully delivered to " + request.getRecipientEmail().trim(),
+                    details
+            ));
+        } else {
+            return ResponseEntity.ok(ApiResponse.error(
+                    "Email dispatch was not successful: " + (result.getMessage() != null ? result.getMessage() : "Unknown error"),
+                    details
+            ));
+        }
     }
 
     private void recordActivity(String actorId, String action, String entityType,

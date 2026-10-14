@@ -92,8 +92,36 @@ export const adminService = {
   },
 
   // Activity logs
-  getActivityLogs: async (page = 0, size = 20) => {
+  getActivityLogs: async (page = 0, size = 50) => {
     const res = await apiClient.get(`/api/v1/admin/activity-logs?page=${page}&size=${size}`);
+    return res.data;
+  },
+
+  // Applications
+  getApplications: async (page = 0, size = 50) => {
+    const res = await apiClient.get(`/api/v1/admin/applications?page=${page}&size=${size}`);
+    return res.data;
+  },
+
+  // Jobs
+  getJobs: async (page = 0, size = 50) => {
+    const res = await apiClient.get(`/api/v1/jobs?page=${page}&size=${size}`);
+    return res.data;
+  },
+
+  // Notifications
+  getNotifications: async (page = 0, size = 50) => {
+    const res = await apiClient.get(`/api/v1/notifications?page=${page}&size=${size}`);
+    return res.data;
+  },
+
+  getUnreadNotificationCount: async () => {
+    const res = await apiClient.get("/api/v1/notifications/unread-count");
+    return res.data;
+  },
+
+  markNotificationAsRead: async (notificationId) => {
+    const res = await apiClient.patch(`/api/v1/notifications/${notificationId}/read`);
     return res.data;
   },
 };

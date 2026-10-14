@@ -12,9 +12,10 @@ public class Notification {
     @Column(length = 36)
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "recipient_user_id", nullable = false)
     @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.CASCADE)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"notifications", "passwordHash", "hibernateLazyInitializer", "handler"})
     private User recipient;
 
     @Column(nullable = false, length = 200)

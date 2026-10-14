@@ -29,6 +29,7 @@ public class ApplicationController {
 
     @PostMapping("/api/v1/candidate/drives/{driveId}/apply")
     @PreAuthorize("hasRole('CANDIDATE')")
+    @org.springframework.transaction.annotation.Transactional
     @Operation(summary = "Apply to a walk-in drive (Candidate)")
     public ResponseEntity<ApiResponse<Application>> applyToDrive(
             @PathVariable String driveId,
@@ -40,6 +41,7 @@ public class ApplicationController {
 
     @GetMapping("/api/v1/candidate/applications")
     @PreAuthorize("hasRole('CANDIDATE')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "Get all applications for current candidate")
     public ResponseEntity<ApiResponse<Page<Application>>> getMyApplications(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -52,6 +54,7 @@ public class ApplicationController {
 
     @PostMapping("/api/v1/candidate/applications/{applicationId}/withdraw")
     @PreAuthorize("hasRole('CANDIDATE')")
+    @org.springframework.transaction.annotation.Transactional
     @Operation(summary = "Withdraw an application (Candidate)")
     public ResponseEntity<ApiResponse<Application>> withdrawApplication(
             @PathVariable String applicationId,
@@ -62,6 +65,7 @@ public class ApplicationController {
 
     @GetMapping("/api/v1/candidate/applications/{applicationId}")
     @PreAuthorize("hasAnyRole('CANDIDATE', 'EMPLOYER', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "Get a specific application by ID")
     public ResponseEntity<ApiResponse<Application>> getApplication(@PathVariable String applicationId) {
         Application app = applicationService.getApplicationById(applicationId);
@@ -72,6 +76,7 @@ public class ApplicationController {
 
     @GetMapping("/api/v1/employer/drives/{driveId}/applications")
     @PreAuthorize("hasAnyRole('EMPLOYER', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "List applications for a drive (Employer)")
     public ResponseEntity<ApiResponse<Page<Application>>> getApplicationsForDrive(
             @PathVariable String driveId,
@@ -84,6 +89,7 @@ public class ApplicationController {
 
     @GetMapping("/api/v1/employer/companies/{companyId}/applications")
     @PreAuthorize("hasAnyRole('EMPLOYER', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "List all applications for a company (Employer)")
     public ResponseEntity<ApiResponse<Page<Application>>> getApplicationsForCompany(
             @PathVariable String companyId,
@@ -96,6 +102,7 @@ public class ApplicationController {
 
     @PatchMapping("/api/v1/employer/applications/{applicationId}/status")
     @PreAuthorize("hasAnyRole('EMPLOYER', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional
     @Operation(summary = "Update application status (Employer/Admin)")
     public ResponseEntity<ApiResponse<Application>> updateStatus(
             @PathVariable String applicationId,
@@ -114,6 +121,7 @@ public class ApplicationController {
 
     @GetMapping("/api/v1/admin/applications")
     @PreAuthorize("hasRole('ADMIN')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "List all applications (Admin)")
     public ResponseEntity<ApiResponse<Page<Application>>> getAllApplications(
             @RequestParam(defaultValue = "0") int page,

@@ -13,8 +13,9 @@ public class Company {
     @Column(length = 36)
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employer_user_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"notifications", "passwordHash", "hibernateLazyInitializer", "handler"})
     private User employer;
 
     @Column(name = "company_name", nullable = false, length = 200)

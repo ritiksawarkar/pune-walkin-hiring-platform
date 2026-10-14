@@ -10,6 +10,8 @@
 
 import { storageService } from "./storageService.js";
 import { normalizeApprovalStatus, normalizeCompanyStatus } from "../utils/statusUtils.js";
+import { apiClient } from "./apiClient.js";
+import { interviewService } from "./interviewService.js";
 
 const STORAGE_KEYS = {
   PROFILE_PREFIX: "punewalkin_candidate_profile_",
@@ -261,7 +263,58 @@ export const candidateService = {
    * Get all eligible, approved, published walk-in drives for candidates
    */
   async getDrives(user, filters = {}) {
-    await new Promise((r) => setTimeout(r, 80));
+    await new Promise((r) => setTimeout(r, 60));
+    const {
+      search = "",
+      location = "All",
+      dateFilter = "All",
+      sortBy = "date-asc",
+      campusType,
+    } = filters;
+
+    let backendDrives = [];
+    try {
+      const params = { size: 100 };
+      if (campusType && campusType !== "ALL") {
+        params.campusType = campusType;
+      }
+      const backendRes = await apiClient.get("/api/v1/drives", params);
+      const list = backendRes?.data?.content || backendRes?.content || (Array.isArray(backendRes?.data) ? backendRes.data : []);
+      if (Array.isArray(list) && list.length > 0) {
+        backendDrives = list.map((d) => ({
+          id: d.id,
+          title: d.title,
+          jobTitle: d.job?.title || d.title,
+          companyId: d.company?.id,
+          companyName: d.company?.companyName || "TechSprint Innovations",
+          driveDate: d.driveDate,
+          interviewDate: d.driveDate,
+          startTime: d.startTime || "09:30 AM",
+          endTime: d.endTime || "05:30 PM",
+          registrationDeadline: d.registrationDeadline,
+          venueName: d.venueName,
+          venueAddress: d.venueAddress,
+          city: d.city || "Pune",
+          state: d.state || "Maharashtra",
+          vacancies: d.vacancies || 1,
+          maxRegistrations: d.maxRegistrations || 100,
+          registeredCount: d.registeredCount || 0,
+          campusType: d.campusType || "OFF_CAMPUS",
+          eligibleDegree: d.eligibleDegree,
+          eligibleBranch: d.eligibleBranch,
+          minCgpa: d.minCgpa,
+          maxBacklogs: d.maxBacklogs,
+          eligibleColleges: d.eligibleColleges || [],
+          approvalStatus: d.approvalStatus || "APPROVED",
+          driveStatus: d.status || "Ongoing",
+          selectionRounds: ["Technical Assessment", "Technical Interview", "HR Discussion"],
+          candidateInstructions: "Carry government photo ID card (Aadhaar/PAN) and 2 printed resumes.",
+        }));
+      }
+    } catch {
+      // Backend not reached or offline
+    }
+
     const allDrives = storageService.getDrives();
     const myApps = await this.getMyApplications(user);
 
@@ -269,7 +322,7 @@ export const candidateService = {
     const companies = storageService.getCompanies();
     const primaryCompany = storageService.getCompany();
 
-    let candidateDrives = allDrives.filter((d) => {
+    let storageDrives = allDrives.filter((d) => {
       const isApproved = normalizeApprovalStatus(d.approvalStatus) === "APPROVED";
       const isPublished = d.driveStatus !== "Draft" && d.driveStatus !== "Cancelled";
       const comp = companies.find((c) => c.id === d.companyId) || primaryCompany;
@@ -277,12 +330,8 @@ export const candidateService = {
       return isApproved && isPublished && isCompanyVerified;
     });
 
-    const {
-      search = "",
-      location = "All",
-      dateFilter = "All",
-      sortBy = "date-asc",
-    } = filters;
+    const backendIds = new Set(backendDrives.map((d) => d.id));
+    let candidateDrives = [...backendDrives, ...storageDrives.filter((d) => !backendIds.has(d.id))];
 
     // Search query
     if (search.trim()) {
@@ -555,6 +604,46 @@ export const candidateService = {
    */
   async getMyInterviews(user) {
     await new Promise((r) => setTimeout(r, 60));
+    const today = new Date().toISOString().split("T")[0];
+
+    try {
+      const backendInts = await interviewService.getMyInterviews();
+      const list = Array.isArray(backendInts) ? backendInts : (backendInts?.content || []);
+      if (Array.isArray(list) && list.length > 0) {
+        return list.map((i) => {
+          const interviewDate = i.interviewDate || today;
+          const isPast = interviewDate < today;
+          return {
+            id: i.id,
+            applicationId: i.application?.id || i.id,
+            driveId: i.walkInDrive?.id || "drive-001",
+            companyName: i.employer?.company?.companyName || i.walkInDrive?.company?.companyName || "TechSprint Innovations",
+            companyTagline: "Innovating Pune Tech Ecosystem",
+            jobTitle: i.walkInDrive?.job?.title || "Junior Full Stack Engineer",
+            driveTitle: i.walkInDrive?.title || "Walk-In Drive",
+            interviewDate: interviewDate,
+            interviewTime: `${i.startTime || "10:00 AM"} - ${i.endTime || "01:00 PM"}`,
+            slot: `${i.startTime || "10:00 AM"} - ${i.endTime || "01:00 PM"}`,
+            tokenNumber: i.pass?.passCode || `PASS-${i.id}`,
+            venueName: i.venue || "Corporate Auditorium",
+            venueAddress: i.address || "Pune Venue",
+            instructions: i.reportingInstructions || "Report 30 mins before allocated slot with Govt ID.",
+            requiredDocuments: [
+              "2 Printed Resumes",
+              "Government Photo ID",
+              "Academic Marks Sheets",
+            ],
+            selectionRounds: ["Technical Aptitude", "Hands-on Interview", "HR Round"],
+            status: i.status === "CONFIRMED" ? "Interview Scheduled" : i.status,
+            passCode: i.pass?.passCode,
+            isPast,
+          };
+        });
+      }
+    } catch {
+      // Backend not available, fallback to local storage
+    }
+
     const apps = await this.getMyApplications(user);
     const drives = storageService.getDrives();
     const company = storageService.getCompany();
@@ -567,8 +656,6 @@ export const candidateService = {
         a.status === "Selected" ||
         a.status === "Registered"
     );
-
-    const today = new Date().toISOString().split("T")[0];
 
     return interviewApps.map((a) => {
       const drive = drives.find((d) => d.id === a.driveId);

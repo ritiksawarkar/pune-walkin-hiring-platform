@@ -16,16 +16,19 @@ public class WalkInDrive {
     @Column(length = 36)
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "employer"})
     private Company company;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "job_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "company"})
     private Job job;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "notifications"})
     private User createdBy;
 
     @Column(nullable = false)
@@ -86,7 +89,8 @@ public class WalkInDrive {
     @Column(name = "max_backlogs")
     private Integer maxBacklogs;
 
-    @OneToMany(mappedBy = "drive", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "drive"})
+    @OneToMany(mappedBy = "drive", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private java.util.List<DriveEligibleCollege> eligibleColleges = new java.util.ArrayList<>();
 
     @Enumerated(EnumType.STRING)
@@ -443,7 +447,15 @@ public class WalkInDrive {
     }
 
     public java.util.List<DriveEligibleCollege> getEligibleColleges() {
-        return eligibleColleges;
+        try {
+            if (eligibleColleges != null) {
+                eligibleColleges.size();
+                return eligibleColleges;
+            }
+        } catch (Exception ignored) {
+            return java.util.Collections.emptyList();
+        }
+        return eligibleColleges != null ? eligibleColleges : java.util.Collections.emptyList();
     }
 
     public void setEligibleColleges(java.util.List<DriveEligibleCollege> eligibleColleges) {

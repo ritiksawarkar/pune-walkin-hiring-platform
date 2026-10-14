@@ -15,6 +15,7 @@ public class CandidateProfile {
     @Column(length = 36)
     private String id;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"passwordHash", "notifications", "hibernateLazyInitializer", "handler"})
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
@@ -241,7 +242,15 @@ public class CandidateProfile {
     }
 
     public List<CandidateEducation> getEducation() {
-        return education;
+        try {
+            if (education != null) {
+                education.size();
+                return education;
+            }
+        } catch (Exception ignored) {
+            return java.util.Collections.emptyList();
+        }
+        return education != null ? education : java.util.Collections.emptyList();
     }
 
     public void setEducation(List<CandidateEducation> education) {
@@ -249,7 +258,15 @@ public class CandidateProfile {
     }
 
     public List<CandidateSkill> getSkills() {
-        return skills;
+        try {
+            if (skills != null) {
+                skills.size();
+                return skills;
+            }
+        } catch (Exception ignored) {
+            return java.util.Collections.emptyList();
+        }
+        return skills != null ? skills : java.util.Collections.emptyList();
     }
 
     public void setSkills(List<CandidateSkill> skills) {
@@ -257,7 +274,15 @@ public class CandidateProfile {
     }
 
     public List<CandidateExperience> getExperience() {
-        return experience;
+        try {
+            if (experience != null) {
+                experience.size();
+                return experience;
+            }
+        } catch (Exception ignored) {
+            return java.util.Collections.emptyList();
+        }
+        return experience != null ? experience : java.util.Collections.emptyList();
     }
 
     public void setExperience(List<CandidateExperience> experience) {
