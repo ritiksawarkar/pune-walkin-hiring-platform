@@ -45,7 +45,7 @@ public class CandidateController {
 
     // ---- ADMIN ENDPOINTS ----
 
-    @GetMapping("/api/v1/admin/candidates")
+    @GetMapping("/api/v1/admin/candidate-profiles")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "List all candidate profiles (Admin)")
     public ResponseEntity<ApiResponse<Page<CandidateProfile>>> getAllCandidates(
@@ -56,7 +56,7 @@ public class CandidateController {
         return ResponseEntity.ok(ApiResponse.success("Candidates fetched", profiles));
     }
 
-    @GetMapping("/api/v1/admin/candidates/{profileId}")
+    @GetMapping("/api/v1/admin/candidate-profiles/{profileId}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get a candidate profile by ID (Admin)")
     public ResponseEntity<ApiResponse<CandidateProfile>> getCandidateById(@PathVariable String profileId) {

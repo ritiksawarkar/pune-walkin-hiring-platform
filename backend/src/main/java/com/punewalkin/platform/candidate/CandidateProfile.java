@@ -8,6 +8,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "candidate_profiles")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CandidateProfile {
 
     @Id
@@ -29,6 +30,22 @@ public class CandidateProfile {
 
     @Column(name = "highest_qualification")
     private String highestQualification;
+
+    @Column(name = "college_name", length = 200)
+    private String collegeName;
+
+    @Column(length = 100)
+    private String degree;
+
+    @Column(length = 100)
+    private String branch;
+
+    @Column(name = "graduation_year", length = 10)
+    private String graduationYear;
+
+    private Double cgpa;
+
+    private int backlogs = 0;
 
     private String aggregate;
 
@@ -261,5 +278,53 @@ public class CandidateProfile {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCollegeName() {
+        return collegeName;
+    }
+
+    public void setCollegeName(String collegeName) {
+        this.collegeName = collegeName;
+    }
+
+    public String getDegree() {
+        return degree;
+    }
+
+    public void setDegree(String degree) {
+        this.degree = degree;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public String getGraduationYear() {
+        return graduationYear;
+    }
+
+    public void setGraduationYear(String graduationYear) {
+        this.graduationYear = graduationYear;
+    }
+
+    public Double getCgpa() {
+        return cgpa;
+    }
+
+    public void setCgpa(Double cgpa) {
+        this.cgpa = cgpa;
+    }
+
+    public int getBacklogs() {
+        return backlogs;
+    }
+
+    public void setBacklogs(int backlogs) {
+        this.backlogs = backlogs;
     }
 }

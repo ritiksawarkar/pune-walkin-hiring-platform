@@ -26,7 +26,23 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Registration successful", response));
+                .body(ApiResponse.success(response.getMessage() != null ? response.getMessage() : "Registration successful", response));
+    }
+
+    @PostMapping("/register/candidate")
+    @Operation(summary = "Register a new Candidate with profile and college information")
+    public ResponseEntity<ApiResponse<AuthResponse>> registerCandidate(@Valid @RequestBody CandidateRegisterRequest request) {
+        AuthResponse response = authService.registerCandidate(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Candidate registration submitted for administrator approval.", response));
+    }
+
+    @PostMapping("/register/employer")
+    @Operation(summary = "Register a new Employer with company details")
+    public ResponseEntity<ApiResponse<AuthResponse>> registerEmployer(@Valid @RequestBody EmployerRegisterRequest request) {
+        AuthResponse response = authService.registerEmployer(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Employer registration submitted for administrator verification.", response));
     }
 
     @PostMapping("/login")

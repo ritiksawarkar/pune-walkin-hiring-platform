@@ -101,6 +101,25 @@ public class DriveService {
         if (req.getRecruiterEmail() != null) drive.setRecruiterEmail(req.getRecruiterEmail());
         if (req.getRecruiterPhone() != null) drive.setRecruiterPhone(req.getRecruiterPhone());
         if (req.getCandidateInstructions() != null) drive.setCandidateInstructions(req.getCandidateInstructions());
+
+        if (req.getCampusType() != null) drive.setCampusType(req.getCampusType());
+        if (req.getEligibleDegree() != null) drive.setEligibleDegree(req.getEligibleDegree());
+        if (req.getEligibleBranch() != null) drive.setEligibleBranch(req.getEligibleBranch());
+        if (req.getEligibleGraduationYearMin() != null) drive.setEligibleGraduationYearMin(req.getEligibleGraduationYearMin());
+        if (req.getEligibleGraduationYearMax() != null) drive.setEligibleGraduationYearMax(req.getEligibleGraduationYearMax());
+        if (req.getMinCgpa() != null) drive.setMinCgpa(req.getMinCgpa());
+        if (req.getMaxBacklogs() != null) drive.setMaxBacklogs(req.getMaxBacklogs());
+
+        if (req.getEligibleColleges() != null) {
+            drive.getEligibleColleges().clear();
+            for (String college : req.getEligibleColleges()) {
+                if (college != null && !college.trim().isEmpty()) {
+                    DriveEligibleCollege dec = new DriveEligibleCollege(
+                            UUID.randomUUID().toString(), drive, college.trim());
+                    drive.getEligibleColleges().add(dec);
+                }
+            }
+        }
     }
 
     public WalkInDrive getDriveById(String driveId) {
@@ -112,7 +131,21 @@ public class DriveService {
         return driveRepository.searchPublishedDrives(search, pageable);
     }
 
+    public Page<WalkInDrive> searchPublishedDrives(String search, CampusType campusType, Pageable pageable) {
+        if (campusType != null) {
+            return driveRepository.searchPublishedDrivesWithCampus(search, campusType, pageable);
+        }
+        return driveRepository.searchPublishedDrives(search, pageable);
+    }
+
     public Page<WalkInDrive> getDrivesByCompany(String companyId, Pageable pageable) {
+        return driveRepository.findByCompanyId(companyId, pageable);
+    }
+
+    public Page<WalkInDrive> getDrivesByCompanyAndCampusType(String companyId, CampusType campusType, Pageable pageable) {
+        if (campusType != null) {
+            return driveRepository.findByCompanyIdAndCampusType(companyId, campusType, pageable);
+        }
         return driveRepository.findByCompanyId(companyId, pageable);
     }
 

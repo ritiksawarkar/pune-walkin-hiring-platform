@@ -29,14 +29,37 @@ public class DriveController {
     // ---- PUBLIC ENDPOINTS ----
 
     @GetMapping("/api/v1/drives")
-    @Operation(summary = "List/search published drives (public)")
+    @Operation(summary = "List/search published drives with optional campusType filter (public)")
     public ResponseEntity<ApiResponse<Page<WalkInDrive>>> listDrives(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) CampusType campusType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<WalkInDrive> drives = driveService.searchPublishedDrives(
+                search, campusType, PageRequest.of(page, size, Sort.by("driveDate").ascending()));
+        return ResponseEntity.ok(ApiResponse.success("Drives fetched", drives));
+    }
+
+    @GetMapping("/api/v1/drives/on-campus")
+    @Operation(summary = "List published on-campus drives (public)")
+    public ResponseEntity<ApiResponse<Page<WalkInDrive>>> listOnCampusDrives(
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<WalkInDrive> drives = driveService.searchPublishedDrives(
-                search, PageRequest.of(page, size, Sort.by("driveDate").ascending()));
-        return ResponseEntity.ok(ApiResponse.success("Drives fetched", drives));
+                search, CampusType.ON_CAMPUS, PageRequest.of(page, size, Sort.by("driveDate").ascending()));
+        return ResponseEntity.ok(ApiResponse.success("On-Campus drives fetched", drives));
+    }
+
+    @GetMapping("/api/v1/drives/off-campus")
+    @Operation(summary = "List published off-campus drives (public)")
+    public ResponseEntity<ApiResponse<Page<WalkInDrive>>> listOffCampusDrives(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<WalkInDrive> drives = driveService.searchPublishedDrives(
+                search, CampusType.OFF_CAMPUS, PageRequest.of(page, size, Sort.by("driveDate").ascending()));
+        return ResponseEntity.ok(ApiResponse.success("Off-Campus drives fetched", drives));
     }
 
     @GetMapping("/api/v1/drives/{driveId}")
@@ -74,13 +97,14 @@ public class DriveController {
 
     @GetMapping("/api/v1/employer/companies/{companyId}/drives")
     @PreAuthorize("hasAnyRole('EMPLOYER', 'ADMIN')")
-    @Operation(summary = "Get drives for a company (Employer)")
+    @Operation(summary = "Get drives for a company with optional campusType filter (Employer)")
     public ResponseEntity<ApiResponse<Page<WalkInDrive>>> getDrivesForCompany(
             @PathVariable String companyId,
+            @RequestParam(required = false) CampusType campusType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<WalkInDrive> drives = driveService.getDrivesByCompany(
-                companyId, PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        Page<WalkInDrive> drives = driveService.getDrivesByCompanyAndCampusType(
+                companyId, campusType, PageRequest.of(page, size, Sort.by("createdAt").descending()));
         return ResponseEntity.ok(ApiResponse.success("Drives fetched", drives));
     }
 
@@ -103,44 +127,5 @@ public class DriveController {
         boolean isAdmin = principal.getRole().name().equals("ADMIN");
         driveService.deleteDrive(driveId, principal.getId(), isAdmin);
         return ResponseEntity.ok(ApiResponse.success("Drive deleted"));
-    }
-
-    // ---- ADMIN ENDPOINTS ----
-
-    @GetMapping("/api/v1/admin/drives")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "List all drives with optional status filter (Admin)")
-    public ResponseEntity<ApiResponse<Page<WalkInDrive>>> getAllDrives(
-            @RequestParam(required = false) String approvalStatus,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<WalkInDrive> drives;
-        if (approvalStatus != null) {
-            DriveApprovalStatus status = DriveApprovalStatus.valueOf(approvalStatus.toUpperCase());
-            drives = driveService.getDrivesByApprovalStatus(status, pageable);
-        } else {
-            drives = driveService.getAllDrives(pageable);
-        }
-        return ResponseEntity.ok(ApiResponse.success("Drives fetched", drives));
-    }
-
-    @PatchMapping("/api/v1/admin/drives/{driveId}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Approve, request changes, or reject a drive (Admin)")
-    public ResponseEntity<ApiResponse<WalkInDrive>> approveDrive(
-            @PathVariable String driveId,
-            @RequestBody Map<String, String> body,
-            @AuthenticationPrincipal UserPrincipal principal) {
-        String action = body != null ? body.get("action") : null;
-        String feedback = body != null ? body.get("feedback") : null;
-        WalkInDrive drive;
-        if ("CHANGES_REQUESTED".equalsIgnoreCase(action)) {
-            drive = driveService.requestChanges(driveId, feedback, principal.getId());
-        } else {
-            boolean approve = "APPROVED".equalsIgnoreCase(action);
-            drive = driveService.approveDrive(driveId, approve, feedback, principal.getId());
-        }
-        return ResponseEntity.ok(ApiResponse.success("Drive approval status updated", drive));
     }
 }

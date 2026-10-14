@@ -31,9 +31,19 @@ const ROUTE_CONFIG = {
     breadcrumbs: ["Jobs", "New Job"],
   },
   "/employer/drives": {
-    title: "Walk-In Drives",
+    title: "Walk-In Drives Overview",
     subtitle: "Manage Pune walk-in schedules, venues, and administrative approvals",
     breadcrumbs: ["Walk-In Drives"],
+  },
+  "/employer/drives/on-campus": {
+    title: "On-Campus Walk-In Drives",
+    subtitle: "Coordinate institutional drives, eligible colleges, and campus candidate batches",
+    breadcrumbs: ["Walk-In Drives", "On-Campus"],
+  },
+  "/employer/drives/off-campus": {
+    title: "Off-Campus Walk-In Drives",
+    subtitle: "Manage open Pune tech park drives, venue capacity, and walk-in pass limits",
+    breadcrumbs: ["Walk-In Drives", "Off-Campus"],
   },
   "/employer/drives/new": {
     title: "Schedule Walk-In Drive",

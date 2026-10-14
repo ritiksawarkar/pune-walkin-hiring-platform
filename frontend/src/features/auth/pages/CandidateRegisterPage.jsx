@@ -11,7 +11,20 @@ import {
   validatePassword,
   validatePhone,
 } from "../utils/authValidation";
-import { CheckCircleIcon, AlertCircleIcon } from "../../../components/common/Icons";
+import { ClockIcon, AlertCircleIcon, ShieldCheckIcon } from "../../../components/common/Icons";
+
+const POPULAR_PUNE_COLLEGES = [
+  "COEP Technological University, Pune",
+  "Pune Institute of Computer Technology (PICT)",
+  "MIT World Peace University (MIT-WPU)",
+  "Vishwakarma Institute of Technology (VIT Pune)",
+  "MKSSS Cummins College of Engineering for Women, Pune",
+  "Sinhgad College of Engineering (SCOE), Vadgaon",
+  "D.Y. Patil College of Engineering, Akurdi",
+  "Pimpri Chinchwad College of Engineering (PCCOE)",
+  "Army Institute of Technology (AIT), Pune",
+  "Bharati Vidyapeeth Deemed University College of Engineering",
+];
 
 export function CandidateRegisterPage() {
   const navigate = useNavigate();
@@ -22,6 +35,13 @@ export function CandidateRegisterPage() {
     fullName: "",
     email: "",
     mobile: "",
+    collegeName: "COEP Technological University, Pune",
+    degree: "B.Tech",
+    branch: "Computer Engineering",
+    graduationYear: "2025",
+    cgpa: "8.2",
+    backlogs: "0",
+    skills: "Java, Spring Boot, React, SQL",
     password: "",
     confirmPassword: "",
     termsAccepted: false,
@@ -56,6 +76,19 @@ export function CandidateRegisterPage() {
     const phoneErr = validatePhone(formData.mobile);
     if (phoneErr) errs.mobile = phoneErr;
 
+    if (!formData.collegeName.trim()) {
+      errs.collegeName = "College name is required for campus drive eligibility.";
+    }
+    if (!formData.degree.trim()) {
+      errs.degree = "Degree is required.";
+    }
+    if (!formData.branch.trim()) {
+      errs.branch = "Branch / Specialization is required.";
+    }
+    if (!formData.graduationYear.trim()) {
+      errs.graduationYear = "Graduation year is required.";
+    }
+
     const passErr = validatePassword(formData.password);
     if (passErr) errs.password = passErr;
 
@@ -66,7 +99,7 @@ export function CandidateRegisterPage() {
     }
 
     if (!formData.termsAccepted) {
-      errs.termsAccepted = "You must agree to the platform terms and privacy policy.";
+      errs.termsAccepted = "You must agree to the platform verification terms.";
     }
 
     setErrors(errs);
@@ -84,11 +117,18 @@ export function CandidateRegisterPage() {
         fullName: formData.fullName,
         email: formData.email,
         mobile: formData.mobile,
+        collegeName: formData.collegeName,
+        degree: formData.degree,
+        branch: formData.branch,
+        graduationYear: formData.graduationYear,
+        cgpa: formData.cgpa,
+        backlogs: formData.backlogs,
+        skills: formData.skills,
         password: formData.password,
       });
 
       setIsSuccess(true);
-      showToast("Candidate account created successfully!");
+      showToast("Registration submitted! Account is pending admin verification.");
     } catch (err) {
       setServerError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -99,25 +139,52 @@ export function CandidateRegisterPage() {
   if (isSuccess) {
     return (
       <AuthLayout
-        title="Registration Successful!"
-        subtitle="Your candidate account is now active"
+        title="Verification Pending"
+        subtitle="Your registration is awaiting administrative review"
       >
-        <div className="text-center space-y-4 py-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-            <CheckCircleIcon className="h-8 w-8" />
+        <div className="text-center space-y-4 py-3">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600 border border-amber-200 shadow-xs">
+            <ClockIcon className="h-8 w-8" />
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Welcome to Pune Walk-In Drive Hub, <span className="font-bold text-slate-900">{formData.fullName}</span>! You can now explore upcoming walk-in drives across Pune IT parks and generate digital walk-in pass tokens.
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            Status: PENDING_VERIFICATION
+          </div>
+
+          <div className="rounded-lg bg-slate-50 border border-slate-200/80 p-4 text-left text-xs space-y-2">
+            <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+              <span className="text-slate-500">Candidate Name:</span>
+              <span className="font-semibold text-slate-800">{formData.fullName}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+              <span className="text-slate-500">Registered Email:</span>
+              <span className="font-mono text-slate-800">{formData.email}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+              <span className="text-slate-500">College / Institute:</span>
+              <span className="font-semibold text-slate-800 truncate max-w-[200px]" title={formData.collegeName}>
+                {formData.collegeName}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Degree & Year:</span>
+              <span className="text-slate-800 font-semibold">{formData.degree} ({formData.graduationYear})</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-600 leading-relaxed px-1">
+            Your registration is awaiting admin verification. You can log in after your account is approved.
           </p>
 
-          <div className="pt-4">
+          <div className="pt-2">
             <Button
               variant="primary"
               size="md"
               className="w-full"
-              onClick={() => navigate("/candidate/dashboard")}
+              onClick={() => navigate("/login")}
             >
-              Go to Candidate Dashboard
+              Return to Platform Sign In
             </Button>
           </div>
         </div>
@@ -128,8 +195,8 @@ export function CandidateRegisterPage() {
   return (
     <AuthLayout
       title="Create Candidate Account"
-      subtitle="Register to attend Pune walk-in interviews and book slots"
-      footerText="Already have an account?"
+      subtitle="Register for Pune Walk-In Drives & On-Campus Recruitment"
+      footerText="Already registered?"
       footerLink="/login"
       footerActionText="Sign In"
     >
@@ -141,6 +208,13 @@ export function CandidateRegisterPage() {
           </div>
         )}
 
+        <div className="rounded-lg bg-blue-50/70 border border-blue-200/80 p-2.5 flex items-start gap-2">
+          <ShieldCheckIcon className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+          <p className="text-2xs text-blue-800 leading-relaxed">
+            All candidate accounts are reviewed by the platform administrator before activation to verify college credentials for campus drive eligibility.
+          </p>
+        </div>
+
         <Input
           label="Full Name"
           name="fullName"
@@ -148,88 +222,194 @@ export function CandidateRegisterPage() {
           onChange={handleChange}
           required
           error={errors.fullName}
-          placeholder="e.g. Pooja Shinde"
+          placeholder="e.g. Snehal Kulkarni"
+          autoComplete="name"
         />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Input
+            label="Email Address"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            error={errors.email}
+            placeholder="snehal@example.com"
+            autoComplete="email"
+          />
+
+          <Input
+            label="Mobile Number"
+            type="tel"
+            name="mobile"
+            value={formData.mobile}
+            onChange={handleChange}
+            required
+            error={errors.mobile}
+            placeholder="+91 98900 12345"
+            autoComplete="tel"
+          />
+        </div>
+
+        {/* Academic / College Section */}
+        <div className="pt-1 border-t border-slate-100">
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            College / Institute Name <span className="text-rose-500">*</span>
+          </label>
+          <input
+            list="pune-colleges-list"
+            name="collegeName"
+            value={formData.collegeName}
+            onChange={handleChange}
+            required
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
+            placeholder="Select or enter your Pune college name"
+          />
+          <datalist id="pune-colleges-list">
+            {POPULAR_PUNE_COLLEGES.map((c, i) => (
+              <option key={i} value={c} />
+            ))}
+          </datalist>
+          {errors.collegeName && (
+            <p className="mt-1 text-2xs text-rose-600">{errors.collegeName}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div>
+            <label className="block text-2xs font-semibold text-slate-700 mb-1">
+              Degree <span className="text-rose-500">*</span>
+            </label>
+            <select
+              name="degree"
+              value={formData.degree}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-900 bg-white"
+            >
+              <option value="B.Tech">B.Tech</option>
+              <option value="B.E.">B.E.</option>
+              <option value="M.Tech">M.Tech</option>
+              <option value="MCA">MCA</option>
+              <option value="B.Sc CS/IT">B.Sc CS/IT</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-2xs font-semibold text-slate-700 mb-1">
+              Branch / Dept <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="branch"
+              value={formData.branch}
+              onChange={handleChange}
+              placeholder="e.g. Computer Engg"
+              className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-900 bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-2xs font-semibold text-slate-700 mb-1">
+              Graduation Year <span className="text-rose-500">*</span>
+            </label>
+            <select
+              name="graduationYear"
+              value={formData.graduationYear}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-900 bg-white"
+            >
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="CGPA / Percentage"
+            type="text"
+            name="cgpa"
+            value={formData.cgpa}
+            onChange={handleChange}
+            placeholder="e.g. 8.5"
+          />
+
+          <Input
+            label="Active Backlogs"
+            type="number"
+            name="backlogs"
+            value={formData.backlogs}
+            onChange={handleChange}
+            placeholder="0"
+            min="0"
+          />
+        </div>
 
         <Input
-          label="Email Address"
-          type="email"
-          name="email"
-          value={formData.email}
+          label="Key Technical Skills"
+          name="skills"
+          value={formData.skills}
           onChange={handleChange}
-          required
-          error={errors.email}
-          placeholder="name@example.com"
+          placeholder="e.g. Java, Spring Boot, React, MySQL"
         />
 
-        <Input
-          label="Mobile Number (10 Digits)"
-          type="tel"
-          name="mobile"
-          value={formData.mobile}
-          onChange={handleChange}
-          required
-          error={errors.mobile}
-          placeholder="9876543210"
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+          <PasswordField
+            label="Password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            error={errors.password}
+            placeholder="Minimum 8 characters"
+            autoComplete="new-password"
+          />
 
-        <PasswordField
-          label="Password (Min. 6 Characters)"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          error={errors.password}
-          placeholder="Create account password"
-        />
+          <PasswordField
+            label="Confirm Password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+            error={errors.confirmPassword}
+            placeholder="Re-enter password"
+            autoComplete="new-password"
+          />
+        </div>
 
-        <PasswordField
-          label="Confirm Password"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          required
-          error={errors.confirmPassword}
-          placeholder="Confirm password"
-        />
-
-        <div className="pt-1">
-          <label className="flex items-start gap-2 cursor-pointer select-none text-xs text-slate-600">
+        {/* Terms and Verification Agreement */}
+        <div className="pt-2">
+          <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600">
             <input
               type="checkbox"
               name="termsAccepted"
               checked={formData.termsAccepted}
               onChange={handleChange}
-              className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 mt-0.5"
             />
             <span>
-              I agree to the Pune Walk-In Platform Terms of Service and Privacy Guidelines.
+              I certify that my academic and college details are accurate. I acknowledge my account will be reviewed by the admin prior to access.
             </span>
           </label>
           {errors.termsAccepted && (
-            <p className="text-xs font-medium text-rose-600 mt-1">
-              {errors.termsAccepted}
-            </p>
+            <p className="mt-1 text-2xs text-rose-600">{errors.termsAccepted}</p>
           )}
         </div>
 
-        <Button
-          type="submit"
-          variant="primary"
-          size="md"
-          loading={loading}
-          className="w-full mt-3"
-        >
-          Create Candidate Account
-        </Button>
-
-        <div className="text-center pt-2">
-          <Link
-            to="/register/employer"
-            className="text-2xs font-semibold text-slate-500 hover:text-blue-600"
+        <div className="pt-2">
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            className="w-full"
+            loading={loading}
           >
-            Are you a recruiter? Register your company here →
-          </Link>
+            Submit Registration for Verification
+          </Button>
         </div>
       </form>
     </AuthLayout>
