@@ -21,7 +21,7 @@ public class MySqlConnectionTest {
         String dbUrl = System.getenv().getOrDefault("DB_URL",
                 "jdbc:mysql://localhost:3306/pune_walkin_hub?createDatabaseIfNotExist=true&serverTimezone=Asia/Kolkata&useSSL=false&allowPublicKeyRetrieval=true");
         String dbUser = System.getenv().getOrDefault("DB_USERNAME", "root");
-        String dbPassword = System.getenv().getOrDefault("DB_PASSWORD", "Pass@1234#1234");
+        String dbPassword = System.getenv().getOrDefault("DB_PASSWORD", "Sahilbadole@1234");
 
         log.info("Testing MySQL connectivity with target URL: {}, user: {}", dbUrl, dbUser);
 

@@ -56,6 +56,8 @@ import { JobDetailsPage } from "../features/jobs/pages/JobDetailsPage";
 
 // Walk-In Drive Pages
 import { DrivesPage } from "../features/drives/pages/DrivesPage";
+import { EmployerOnCampusDrivesPage } from "../features/drives/pages/EmployerOnCampusDrivesPage";
+import { EmployerOffCampusDrivesPage } from "../features/drives/pages/EmployerOffCampusDrivesPage";
 import { DriveCreatePage } from "../features/drives/pages/DriveCreatePage";
 import { DriveEditPage } from "../features/drives/pages/DriveEditPage";
 import { DriveDetailsPage } from "../features/drives/pages/DriveDetailsPage";
@@ -198,6 +200,8 @@ export function AppRoutes() {
 
         {/* Walk-In Drives Management */}
         <Route path="drives" element={<DrivesPage />} />
+        <Route path="drives/on-campus" element={<EmployerOnCampusDrivesPage />} />
+        <Route path="drives/off-campus" element={<EmployerOffCampusDrivesPage />} />
         <Route path="drives/new" element={<DriveCreatePage />} />
         <Route path="drives/:driveId" element={<DriveDetailsPage />} />
         <Route path="drives/:driveId/edit" element={<DriveEditPage />} />

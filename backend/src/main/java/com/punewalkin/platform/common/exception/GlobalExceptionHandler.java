@@ -65,6 +65,24 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(AccountPendingApprovalException.class)
+    public ResponseEntity<Map<String, Object>> handleAccountPendingApproval(
+            AccountPendingApprovalException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "ACCOUNT_PENDING_APPROVAL", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccountRejectedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccountRejected(
+            AccountRejectedException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "ACCOUNT_REJECTED", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccountSuspendedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccountSuspended(
+            AccountSuspendedException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "ACCOUNT_SUSPENDED", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(
             AccessDeniedException ex, HttpServletRequest request) {
@@ -74,7 +92,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class, AuthenticationException.class})
     public ResponseEntity<Map<String, Object>> handleAuthenticationException(
             Exception ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Invalid credentials or token expired.", request);
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Invalid email or password. Please verify credentials.", request);
     }
 
     @ExceptionHandler(Exception.class)

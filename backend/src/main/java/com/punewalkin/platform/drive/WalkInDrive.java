@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "walk_in_drives")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class WalkInDrive {
 
     @Id
@@ -62,6 +63,31 @@ public class WalkInDrive {
 
     @Column(name = "registered_count")
     private int registeredCount = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "campus_type", nullable = false, length = 30)
+    private CampusType campusType = CampusType.OFF_CAMPUS;
+
+    @Column(name = "eligible_degree", length = 150)
+    private String eligibleDegree;
+
+    @Column(name = "eligible_branch", length = 150)
+    private String eligibleBranch;
+
+    @Column(name = "eligible_graduation_year_min")
+    private Integer eligibleGraduationYearMin;
+
+    @Column(name = "eligible_graduation_year_max")
+    private Integer eligibleGraduationYearMax;
+
+    @Column(name = "min_cgpa")
+    private Double minCgpa;
+
+    @Column(name = "max_backlogs")
+    private Integer maxBacklogs;
+
+    @OneToMany(mappedBy = "drive", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private java.util.List<DriveEligibleCollege> eligibleColleges = new java.util.ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false, length = 30)
@@ -358,5 +384,69 @@ public class WalkInDrive {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public CampusType getCampusType() {
+        return campusType;
+    }
+
+    public void setCampusType(CampusType campusType) {
+        this.campusType = campusType;
+    }
+
+    public String getEligibleDegree() {
+        return eligibleDegree;
+    }
+
+    public void setEligibleDegree(String eligibleDegree) {
+        this.eligibleDegree = eligibleDegree;
+    }
+
+    public String getEligibleBranch() {
+        return eligibleBranch;
+    }
+
+    public void setEligibleBranch(String eligibleBranch) {
+        this.eligibleBranch = eligibleBranch;
+    }
+
+    public Integer getEligibleGraduationYearMin() {
+        return eligibleGraduationYearMin;
+    }
+
+    public void setEligibleGraduationYearMin(Integer eligibleGraduationYearMin) {
+        this.eligibleGraduationYearMin = eligibleGraduationYearMin;
+    }
+
+    public Integer getEligibleGraduationYearMax() {
+        return eligibleGraduationYearMax;
+    }
+
+    public void setEligibleGraduationYearMax(Integer eligibleGraduationYearMax) {
+        this.eligibleGraduationYearMax = eligibleGraduationYearMax;
+    }
+
+    public Double getMinCgpa() {
+        return minCgpa;
+    }
+
+    public void setMinCgpa(Double minCgpa) {
+        this.minCgpa = minCgpa;
+    }
+
+    public Integer getMaxBacklogs() {
+        return maxBacklogs;
+    }
+
+    public void setMaxBacklogs(Integer maxBacklogs) {
+        this.maxBacklogs = maxBacklogs;
+    }
+
+    public java.util.List<DriveEligibleCollege> getEligibleColleges() {
+        return eligibleColleges;
+    }
+
+    public void setEligibleColleges(java.util.List<DriveEligibleCollege> eligibleColleges) {
+        this.eligibleColleges = eligibleColleges;
     }
 }

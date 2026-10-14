@@ -16,6 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.punewalkin.platform.notification.NotificationService;
+import com.punewalkin.platform.notification.NotificationType;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -26,15 +29,18 @@ public class ApplicationService {
     private final CandidateProfileRepository candidateProfileRepository;
     private final DriveRepository driveRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public ApplicationService(ApplicationRepository applicationRepository,
                                CandidateProfileRepository candidateProfileRepository,
                                DriveRepository driveRepository,
-                               UserRepository userRepository) {
+                               UserRepository userRepository,
+                               NotificationService notificationService) {
         this.applicationRepository = applicationRepository;
         this.candidateProfileRepository = candidateProfileRepository;
         this.driveRepository = driveRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -46,6 +52,9 @@ public class ApplicationService {
         // Find drive
         WalkInDrive drive = driveRepository.findById(driveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Drive not found: " + driveId));
+
+        // Validate account approval and campus eligibility
+        validateCandidateEligibility(candidateProfile, drive);
 
         // Validation checks
         if (drive.getApprovalStatus() != DriveApprovalStatus.APPROVED) {
@@ -70,9 +79,13 @@ public class ApplicationService {
         app.setCompany(drive.getCompany());
         app.setStatus(ApplicationStatus.REGISTERED);
 
+        // Increment registered count
+        int newCount = drive.getRegisteredCount() + 1;
+        drive.setRegisteredCount(newCount);
+        driveRepository.save(drive);
+
         // Generate token
-        String token = "TKN-" + driveId.substring(0, 4).toUpperCase() + "-"
-                + (drive.getRegisteredCount() + 1);
+        String token = "TKN-" + driveId.substring(0, Math.min(4, driveId.length())).toUpperCase() + "-" + newCount;
         app.setTokenNumber(token);
 
         // Set resume filename from candidate profile if available
@@ -80,11 +93,34 @@ public class ApplicationService {
             app.setResumeFileName(candidateProfile.getResumeFileName());
         }
 
-        // Increment registered count
-        drive.setRegisteredCount(drive.getRegisteredCount() + 1);
-        driveRepository.save(drive);
+        Application savedApp = applicationRepository.save(app);
 
-        return applicationRepository.save(app);
+        // Notify candidate of registration confirmation
+        notificationService.notifyUser(
+                candidateUserId,
+                "Drive Registration Confirmed",
+                "You have successfully registered for " + drive.getTitle() + ". Walk-in Token: " + token,
+                NotificationType.SUCCESS,
+                "DRIVE_APPLICATION",
+                savedApp.getId(),
+                "/candidate/applications/" + savedApp.getId()
+        );
+
+        // Notify employer of new registration
+        if (drive.getCreatedBy() != null) {
+            String candName = candidateProfile.getUser() != null ? candidateProfile.getUser().getFullName() : "A candidate";
+            notificationService.notifyUser(
+                    drive.getCreatedBy().getId(),
+                    "New Drive Registration",
+                    candName + " registered for " + drive.getTitle(),
+                    NotificationType.INFO,
+                    "DRIVE_APPLICATION",
+                    savedApp.getId(),
+                    "/employer/drives/" + drive.getId() + "/candidates"
+            );
+        }
+
+        return savedApp;
     }
 
     @Transactional
@@ -151,5 +187,136 @@ public class ApplicationService {
 
     public Page<Application> getAllApplications(Pageable pageable) {
         return applicationRepository.findAll(pageable);
+    }
+
+    private void validateCandidateEligibility(CandidateProfile candidate, WalkInDrive drive) {
+        // Account approval status check
+        if (candidate.getUser() != null && !candidate.getUser().getAccountStatus().isApproved()) {
+            throw new ForbiddenException("Account verification required. Your candidate profile is currently awaiting admin verification.");
+        }
+
+        // On-Campus Eligibility Enforcement
+        if (drive.getCampusType() == com.punewalkin.platform.drive.CampusType.ON_CAMPUS) {
+            // 1. Eligible Colleges Check
+            if (drive.getEligibleColleges() != null && !drive.getEligibleColleges().isEmpty()) {
+                String candidateCollege = candidate.getCollegeName();
+                boolean collegeMatched = false;
+                if (candidateCollege != null && !candidateCollege.isBlank()) {
+                    for (com.punewalkin.platform.drive.DriveEligibleCollege dec : drive.getEligibleColleges()) {
+                        if (candidateCollege.toLowerCase().contains(dec.getCollegeName().toLowerCase()) ||
+                            dec.getCollegeName().toLowerCase().contains(candidateCollege.toLowerCase())) {
+                            collegeMatched = true;
+                            break;
+                        }
+                    }
+                }
+                // Also check candidate education institutions
+                if (!collegeMatched && candidate.getEducation() != null) {
+                    for (com.punewalkin.platform.candidate.CandidateEducation edu : candidate.getEducation()) {
+                        if (edu.getInstitution() != null) {
+                            for (com.punewalkin.platform.drive.DriveEligibleCollege dec : drive.getEligibleColleges()) {
+                                if (edu.getInstitution().toLowerCase().contains(dec.getCollegeName().toLowerCase()) ||
+                                    dec.getCollegeName().toLowerCase().contains(edu.getInstitution().toLowerCase())) {
+                                    collegeMatched = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (collegeMatched) break;
+                    }
+                }
+                if (!collegeMatched) {
+                    throw new BadRequestException("You are not eligible for this On-Campus drive. Only students/graduates from participating eligible colleges may register.");
+                }
+            }
+
+            // 2. Degree Check
+            if (drive.getEligibleDegree() != null && !drive.getEligibleDegree().isBlank()) {
+                String reqDegree = drive.getEligibleDegree().trim().toLowerCase();
+                boolean degreeMatched = false;
+                if (candidate.getDegree() != null && candidate.getDegree().toLowerCase().contains(reqDegree)) {
+                    degreeMatched = true;
+                }
+                if (!degreeMatched && candidate.getHighestQualification() != null &&
+                        candidate.getHighestQualification().toLowerCase().contains(reqDegree)) {
+                    degreeMatched = true;
+                }
+                if (!degreeMatched && candidate.getEducation() != null) {
+                    for (var edu : candidate.getEducation()) {
+                        if (edu.getQualification() != null && edu.getQualification().toLowerCase().contains(reqDegree)) {
+                            degreeMatched = true;
+                            break;
+                        }
+                    }
+                }
+                if (!degreeMatched) {
+                    throw new BadRequestException("Degree criteria mismatch: " + drive.getEligibleDegree() + " required.");
+                }
+            }
+
+            // 3. Branch / Department Check
+            if (drive.getEligibleBranch() != null && !drive.getEligibleBranch().isBlank()) {
+                String reqBranch = drive.getEligibleBranch().trim().toLowerCase();
+                boolean branchMatched = false;
+                if (candidate.getBranch() != null && candidate.getBranch().toLowerCase().contains(reqBranch)) {
+                    branchMatched = true;
+                }
+                if (!branchMatched && candidate.getEducation() != null) {
+                    for (var edu : candidate.getEducation()) {
+                        if (edu.getCourse() != null && edu.getCourse().toLowerCase().contains(reqBranch)) {
+                            branchMatched = true;
+                            break;
+                        }
+                    }
+                }
+                if (!branchMatched) {
+                    throw new BadRequestException("Branch/Course criteria mismatch: " + drive.getEligibleBranch() + " required.");
+                }
+            }
+
+            // 4. Graduation Year Range Check
+            Integer candGradYear = extractGraduationYear(candidate);
+            if (candGradYear != null) {
+                if (drive.getEligibleGraduationYearMin() != null && candGradYear < drive.getEligibleGraduationYearMin()) {
+                    throw new BadRequestException("Graduation year " + candGradYear + " is earlier than eligible minimum year " + drive.getEligibleGraduationYearMin());
+                }
+                if (drive.getEligibleGraduationYearMax() != null && candGradYear > drive.getEligibleGraduationYearMax()) {
+                    throw new BadRequestException("Graduation year " + candGradYear + " exceeds eligible maximum year " + drive.getEligibleGraduationYearMax());
+                }
+            }
+
+            // 5. Minimum CGPA Check
+            if (drive.getMinCgpa() != null) {
+                Double candCgpa = candidate.getCgpa();
+                if (candCgpa != null && candCgpa < drive.getMinCgpa()) {
+                    throw new BadRequestException("Minimum CGPA requirement not met. Required: " + drive.getMinCgpa() + ", Candidate: " + candCgpa);
+                }
+            }
+
+            // 6. Max Backlogs Check
+            if (drive.getMaxBacklogs() != null) {
+                if (candidate.getBacklogs() > drive.getMaxBacklogs()) {
+                    throw new BadRequestException("Maximum backlogs limit exceeded. Allowed: " + drive.getMaxBacklogs() + ", Candidate: " + candidate.getBacklogs());
+                }
+            }
+        }
+    }
+
+    private Integer extractGraduationYear(CandidateProfile candidate) {
+        if (candidate.getGraduationYear() != null && !candidate.getGraduationYear().isBlank()) {
+            try {
+                return Integer.parseInt(candidate.getGraduationYear().trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        if (candidate.getEducation() != null) {
+            for (var edu : candidate.getEducation()) {
+                if (edu.getGraduationYear() != null && !edu.getGraduationYear().isBlank()) {
+                    try {
+                        return Integer.parseInt(edu.getGraduationYear().trim());
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        }
+        return null;
     }
 }

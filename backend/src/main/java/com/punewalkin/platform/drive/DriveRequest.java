@@ -49,6 +49,16 @@ public class DriveRequest {
     private String recruiterPhone;
     private String candidateInstructions;
 
+    // Campus classification and eligibility
+    private CampusType campusType = CampusType.OFF_CAMPUS;
+    private String eligibleDegree;
+    private String eligibleBranch;
+    private Integer eligibleGraduationYearMin;
+    private Integer eligibleGraduationYearMax;
+    private Double minCgpa;
+    private Integer maxBacklogs;
+    private java.util.List<String> eligibleColleges = new java.util.ArrayList<>();
+
     // Linked job ID
     @NotBlank(message = "Job ID is required")
     private String jobId;
@@ -112,4 +122,28 @@ public class DriveRequest {
 
     public String getJobId() { return jobId; }
     public void setJobId(String jobId) { this.jobId = jobId; }
+
+    public CampusType getCampusType() { return campusType; }
+    public void setCampusType(CampusType campusType) { this.campusType = campusType; }
+
+    public String getEligibleDegree() { return eligibleDegree; }
+    public void setEligibleDegree(String eligibleDegree) { this.eligibleDegree = eligibleDegree; }
+
+    public String getEligibleBranch() { return eligibleBranch; }
+    public void setEligibleBranch(String eligibleBranch) { this.eligibleBranch = eligibleBranch; }
+
+    public Integer getEligibleGraduationYearMin() { return eligibleGraduationYearMin; }
+    public void setEligibleGraduationYearMin(Integer eligibleGraduationYearMin) { this.eligibleGraduationYearMin = eligibleGraduationYearMin; }
+
+    public Integer getEligibleGraduationYearMax() { return eligibleGraduationYearMax; }
+    public void setEligibleGraduationYearMax(Integer eligibleGraduationYearMax) { this.eligibleGraduationYearMax = eligibleGraduationYearMax; }
+
+    public Double getMinCgpa() { return minCgpa; }
+    public void setMinCgpa(Double minCgpa) { this.minCgpa = minCgpa; }
+
+    public Integer getMaxBacklogs() { return maxBacklogs; }
+    public void setMaxBacklogs(Integer maxBacklogs) { this.maxBacklogs = maxBacklogs; }
+
+    public java.util.List<String> getEligibleColleges() { return eligibleColleges; }
+    public void setEligibleColleges(java.util.List<String> eligibleColleges) { this.eligibleColleges = eligibleColleges; }
 }

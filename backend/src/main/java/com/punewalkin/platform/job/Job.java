@@ -66,6 +66,10 @@ public class Job {
     @Column(nullable = false, length = 30)
     private JobStatus status = JobStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "campus_type", nullable = false, length = 30)
+    private com.punewalkin.platform.drive.CampusType campusType = com.punewalkin.platform.drive.CampusType.OFF_CAMPUS;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -246,5 +250,13 @@ public class Job {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public com.punewalkin.platform.drive.CampusType getCampusType() {
+        return campusType;
+    }
+
+    public void setCampusType(com.punewalkin.platform.drive.CampusType campusType) {
+        this.campusType = campusType;
     }
 }

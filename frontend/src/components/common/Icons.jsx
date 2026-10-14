@@ -295,6 +295,8 @@ export function AcademicCapIcon({ className = "w-5 h-5" }) {
   );
 }
 
+export const GraduationCapIcon = AcademicCapIcon;
+
 export function AwardIcon({ className = "w-5 h-5" }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
