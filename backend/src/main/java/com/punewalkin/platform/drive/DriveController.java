@@ -29,6 +29,7 @@ public class DriveController {
     // ---- PUBLIC ENDPOINTS ----
 
     @GetMapping("/api/v1/drives")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "List/search published drives with optional campusType filter (public)")
     public ResponseEntity<ApiResponse<Page<WalkInDrive>>> listDrives(
             @RequestParam(required = false) String search,
@@ -41,6 +42,7 @@ public class DriveController {
     }
 
     @GetMapping("/api/v1/drives/on-campus")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "List published on-campus drives (public)")
     public ResponseEntity<ApiResponse<Page<WalkInDrive>>> listOnCampusDrives(
             @RequestParam(required = false) String search,
@@ -52,6 +54,7 @@ public class DriveController {
     }
 
     @GetMapping("/api/v1/drives/off-campus")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "List published off-campus drives (public)")
     public ResponseEntity<ApiResponse<Page<WalkInDrive>>> listOffCampusDrives(
             @RequestParam(required = false) String search,
@@ -63,6 +66,7 @@ public class DriveController {
     }
 
     @GetMapping("/api/v1/drives/{driveId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "Get drive details (public)")
     public ResponseEntity<ApiResponse<WalkInDrive>> getDrive(@PathVariable String driveId) {
         WalkInDrive drive = driveService.getDriveById(driveId);
@@ -73,6 +77,7 @@ public class DriveController {
 
     @PostMapping("/api/v1/employer/companies/{companyId}/drives")
     @PreAuthorize("hasAnyRole('EMPLOYER', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional
     @Operation(summary = "Create a walk-in drive (Employer)")
     public ResponseEntity<ApiResponse<WalkInDrive>> createDrive(
             @PathVariable String companyId,
@@ -85,6 +90,7 @@ public class DriveController {
 
     @PutMapping("/api/v1/employer/drives/{driveId}")
     @PreAuthorize("hasAnyRole('EMPLOYER', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional
     @Operation(summary = "Update drive details (Employer)")
     public ResponseEntity<ApiResponse<WalkInDrive>> updateDrive(
             @PathVariable String driveId,
@@ -97,6 +103,7 @@ public class DriveController {
 
     @GetMapping("/api/v1/employer/companies/{companyId}/drives")
     @PreAuthorize("hasAnyRole('EMPLOYER', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "Get drives for a company with optional campusType filter (Employer)")
     public ResponseEntity<ApiResponse<Page<WalkInDrive>>> getDrivesForCompany(
             @PathVariable String companyId,
@@ -110,6 +117,7 @@ public class DriveController {
 
     @PostMapping("/api/v1/employer/drives/{driveId}/submit")
     @PreAuthorize("hasRole('EMPLOYER')")
+    @org.springframework.transaction.annotation.Transactional
     @Operation(summary = "Submit drive for admin approval (Employer)")
     public ResponseEntity<ApiResponse<WalkInDrive>> submitDrive(
             @PathVariable String driveId,

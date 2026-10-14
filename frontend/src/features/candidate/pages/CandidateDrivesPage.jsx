@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { candidateService } from "../../../services/candidateService";
 import { useToast } from "../../../context/ToastContext";
@@ -32,13 +32,37 @@ const PUNE_LOCATIONS = [
 export function CandidateDrivesPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [drives, setDrives] = useState([]);
   const [candidateProfile, setCandidateProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Tabs: ALL | ON_CAMPUS | OFF_CAMPUS
-  const [campusTab, setCampusTab] = useState("ALL");
+  const campusParam = searchParams.get("campus");
+  const [campusTab, setCampusTab] = useState(() => {
+    if (campusParam === "ON_CAMPUS" || campusParam === "OFF_CAMPUS") return campusParam;
+    return "ALL";
+  });
+
+  useEffect(() => {
+    if (campusParam === "ON_CAMPUS" || campusParam === "OFF_CAMPUS") {
+      setCampusTab(campusParam);
+    } else if (!campusParam || campusParam === "ALL") {
+      setCampusTab("ALL");
+    }
+  }, [campusParam]);
+
+  const handleTabChange = (newTab) => {
+    setCampusTab(newTab);
+    const newParams = new URLSearchParams(searchParams);
+    if (newTab === "ALL") {
+      newParams.delete("campus");
+    } else {
+      newParams.set("campus", newTab);
+    }
+    setSearchParams(newParams);
+  };
 
   // Filters state
   const [search, setSearch] = useState("");
@@ -137,7 +161,7 @@ export function CandidateDrivesPage() {
         {/* Campus Type Tabs */}
         <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
           <button
-            onClick={() => setCampusTab("ALL")}
+            onClick={() => handleTabChange("ALL")}
             className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               campusTab === "ALL"
                 ? "bg-blue-600 text-white shadow-xs"
@@ -148,7 +172,7 @@ export function CandidateDrivesPage() {
           </button>
 
           <button
-            onClick={() => setCampusTab("ON_CAMPUS")}
+            onClick={() => handleTabChange("ON_CAMPUS")}
             className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               campusTab === "ON_CAMPUS"
                 ? "bg-blue-600 text-white shadow-xs"
@@ -162,7 +186,7 @@ export function CandidateDrivesPage() {
           </button>
 
           <button
-            onClick={() => setCampusTab("OFF_CAMPUS")}
+            onClick={() => handleTabChange("OFF_CAMPUS")}
             className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               campusTab === "OFF_CAMPUS"
                 ? "bg-blue-600 text-white shadow-xs"

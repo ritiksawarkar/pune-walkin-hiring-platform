@@ -164,9 +164,11 @@ public class DriveService {
         if (!drive.getCreatedBy().getId().equals(requestingUserId)) {
             throw new ForbiddenException("Not authorized.");
         }
-        if (drive.getApprovalStatus() == DriveApprovalStatus.PENDING ||
-                drive.getApprovalStatus() == DriveApprovalStatus.APPROVED) {
-            throw new BadRequestException("Drive is already submitted or approved.");
+        if (drive.getApprovalStatus() == DriveApprovalStatus.APPROVED) {
+            throw new BadRequestException("Drive is already approved.");
+        }
+        if (drive.getApprovalStatus() == DriveApprovalStatus.PENDING) {
+            throw new BadRequestException("Drive is already submitted and pending review.");
         }
         drive.setApprovalStatus(DriveApprovalStatus.PENDING);
         drive.setDriveStatus(DriveStatus.DRAFT);

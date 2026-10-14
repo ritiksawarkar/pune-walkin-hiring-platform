@@ -48,9 +48,12 @@ public class CandidateAdminResponse {
             this.branch = profile.getBranch();
             this.graduationYear = profile.getGraduationYear();
             this.cgpa = profile.getCgpa();
-            this.backlogs = profile.getBacklogs();
-            if (profile.getSkills() != null) {
-                this.skills = profile.getSkills().stream().map(CandidateSkill::getSkillName).toList();
+            try {
+                if (profile.getSkills() != null) {
+                    this.skills = profile.getSkills().stream().map(CandidateSkill::getSkillName).toList();
+                }
+            } catch (Exception ignored) {
+                this.skills = java.util.Collections.emptyList();
             }
         }
     }

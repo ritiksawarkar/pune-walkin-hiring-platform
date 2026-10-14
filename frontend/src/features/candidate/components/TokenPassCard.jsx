@@ -10,7 +10,7 @@ import {
   FileTextIcon,
 } from "../../../components/common/Icons";
 
-export function TokenPassCard({ application, drive, onPrint }) {
+export function TokenPassCard({ application, drive, pass, qrBase64, onPrint }) {
   if (!application) return null;
 
   const handlePrint = () => {
@@ -111,22 +111,40 @@ export function TokenPassCard({ application, drive, onPrint }) {
         </div>
       </div>
 
-      {/* Pass Footer with barcode visual and print button */}
+      {/* Pass Footer with QR Code visual, Pass Code, and print button */}
       <div className="pt-4 border-t border-dashed border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Simulated Barcode */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-1 h-7">
-            {[4, 2, 6, 2, 8, 3, 2, 5, 2, 7, 3, 2, 6, 4, 2, 8, 2, 3, 6, 2, 4].map((w, idx) => (
-              <div
-                key={idx}
-                className="bg-slate-800 h-full"
-                style={{ width: `${w}px` }}
+        {/* QR Code and Pass Details */}
+        <div className="flex items-center gap-3">
+          {(qrBase64 || pass?.qrBase64) ? (
+            <div className="h-16 w-16 shrink-0 bg-white p-1 rounded-lg border border-slate-200 shadow-xs flex items-center justify-center">
+              <img
+                src={qrBase64 || pass.qrBase64}
+                alt="Entry QR Pass"
+                className="h-full w-full object-contain"
               />
-            ))}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 h-7">
+                {[4, 2, 6, 2, 8, 3, 2, 5, 2, 7, 3, 2, 6, 4, 2, 8, 2, 3, 6, 2, 4].map((w, idx) => (
+                  <div key={idx} className="bg-slate-800 h-full" style={{ width: `${w}px` }} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <span className="text-3xs font-bold uppercase tracking-wider text-slate-400 block">
+              Digital Walk-In Access Pass
+            </span>
+            <div className="font-mono text-xs font-black text-blue-700">
+              {pass?.passCode || `PASS-${application.tokenNumber || "2026-ACTIVE"}`}
+            </div>
+            <div className="text-3xs text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span>Status: <strong>{pass?.status || "ACTIVE"}</strong> (Scan at Venue)</span>
+            </div>
           </div>
-          <p className="font-mono text-3xs text-slate-400">
-            PUNE-VERIFIED-PASS-#{application.tokenNumber || "TS-W26-004"}
-          </p>
         </div>
 
         <div className="flex items-center gap-2 print:hidden">

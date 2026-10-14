@@ -36,10 +36,9 @@ public class FlywayMigrationValidationTest {
 
         log.info("Flyway migration completed successfully. Migrations executed: {}, target schema version: {}",
                 result.migrationsExecuted, result.targetSchemaVersion);
-
-        assertEquals(3, result.migrationsExecuted, "Expected exactly 3 migrations (V1, V2, and V3) to execute");
+        assertEquals(4, result.migrationsExecuted, "Expected 4 migrations (V1, V2, V3, and V4) to execute");
         assertTrue(result.success, "Flyway migration should succeed");
-        assertEquals("3", result.targetSchemaVersion, "Target schema version should be 3");
+        assertEquals("4", result.targetSchemaVersion, "Target schema version should be 4");
 
         // Verify seeded data in notifications table
         try (Connection conn = DriverManager.getConnection(jdbcUrl, user, password);

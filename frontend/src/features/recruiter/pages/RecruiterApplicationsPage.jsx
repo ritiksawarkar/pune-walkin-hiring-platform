@@ -18,6 +18,8 @@ import {
   FilterIcon,
 } from "../../../components/common/Icons";
 
+import { interviewService } from "../../../services/interviewService";
+
 export function RecruiterApplicationsPage() {
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
@@ -65,20 +67,36 @@ export function RecruiterApplicationsPage() {
     loadData();
   }, [loadData]);
 
-  const handleStatusUpdate = async (applicationId, newStatus, reason, note) => {
+  const handleStatusUpdate = async (applicationId, newStatus, reason, note, interviewDetails) => {
     try {
       setUpdatingStatus(true);
+      if (newStatus === "Interview Scheduled" && interviewDetails?.scheduledAt) {
+        try {
+          await interviewService.scheduleInterview({
+            applicationId,
+            scheduledAt: interviewDetails.scheduledAt,
+            venueOrLocation: interviewDetails.venueOrLocation,
+            meetingLink: interviewDetails.meetingLink,
+            instructions: interviewDetails.instructions || note,
+            reportingInstructions: interviewDetails.reportingInstructions,
+          });
+          showToast(`Interview confirmed & QR access pass generated!`);
+        } catch (e) {
+          console.warn("Interview scheduling backend call notice:", e);
+        }
+      }
+
       await recruitmentService.updateApplicationStatus(
         applicationId,
         newStatus,
         reason,
         note
       );
-      showToast(`Status updated to "${newStatus}"!`);
+      showToast(`Status transitioned to "${newStatus}"!`);
       setIsStatusOpen(false);
       loadData();
     } catch (err) {
-      showToast("Failed to update status.", "error");
+      showToast(err.message || "Failed to update status.", "error");
     } finally {
       setUpdatingStatus(false);
     }

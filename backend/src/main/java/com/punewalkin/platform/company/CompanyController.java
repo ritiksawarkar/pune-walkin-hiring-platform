@@ -72,6 +72,7 @@ public class CompanyController {
 
     @GetMapping("/api/v1/admin/companies")
     @PreAuthorize("hasRole('ADMIN')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Operation(summary = "List all companies with optional status filter (Admin)")
     public ResponseEntity<ApiResponse<Page<Company>>> getAllCompanies(
             @RequestParam(required = false) String status,
@@ -79,7 +80,7 @@ public class CompanyController {
             @RequestParam(defaultValue = "20") int size) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Company> companies;
-        if (status != null) {
+        if (status != null && !status.equalsIgnoreCase("ALL") && !status.trim().isEmpty()) {
             CompanyVerificationStatus vs = CompanyVerificationStatus.valueOf(status.toUpperCase());
             companies = companyService.getCompaniesByStatus(vs, pageable);
         } else {

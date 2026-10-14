@@ -232,22 +232,29 @@ public class ApplicationService {
 
             // 2. Degree Check
             if (drive.getEligibleDegree() != null && !drive.getEligibleDegree().isBlank()) {
-                String reqDegree = drive.getEligibleDegree().trim().toLowerCase();
+                String[] reqDegrees = drive.getEligibleDegree().toLowerCase().split("[,/|]");
                 boolean degreeMatched = false;
-                if (candidate.getDegree() != null && candidate.getDegree().toLowerCase().contains(reqDegree)) {
-                    degreeMatched = true;
-                }
-                if (!degreeMatched && candidate.getHighestQualification() != null &&
-                        candidate.getHighestQualification().toLowerCase().contains(reqDegree)) {
-                    degreeMatched = true;
-                }
-                if (!degreeMatched && candidate.getEducation() != null) {
-                    for (var edu : candidate.getEducation()) {
-                        if (edu.getQualification() != null && edu.getQualification().toLowerCase().contains(reqDegree)) {
-                            degreeMatched = true;
-                            break;
+                for (String rd : reqDegrees) {
+                    String clean = rd.trim();
+                    if (clean.isEmpty()) continue;
+                    if (candidate.getDegree() != null && candidate.getDegree().toLowerCase().contains(clean)) {
+                        degreeMatched = true;
+                        break;
+                    }
+                    if (candidate.getHighestQualification() != null &&
+                            candidate.getHighestQualification().toLowerCase().contains(clean)) {
+                        degreeMatched = true;
+                        break;
+                    }
+                    if (candidate.getEducation() != null) {
+                        for (var edu : candidate.getEducation()) {
+                            if (edu.getQualification() != null && edu.getQualification().toLowerCase().contains(clean)) {
+                                degreeMatched = true;
+                                break;
+                            }
                         }
                     }
+                    if (degreeMatched) break;
                 }
                 if (!degreeMatched) {
                     throw new BadRequestException("Degree criteria mismatch: " + drive.getEligibleDegree() + " required.");
@@ -256,18 +263,24 @@ public class ApplicationService {
 
             // 3. Branch / Department Check
             if (drive.getEligibleBranch() != null && !drive.getEligibleBranch().isBlank()) {
-                String reqBranch = drive.getEligibleBranch().trim().toLowerCase();
+                String[] reqBranches = drive.getEligibleBranch().toLowerCase().split("[,/|]");
                 boolean branchMatched = false;
-                if (candidate.getBranch() != null && candidate.getBranch().toLowerCase().contains(reqBranch)) {
-                    branchMatched = true;
-                }
-                if (!branchMatched && candidate.getEducation() != null) {
-                    for (var edu : candidate.getEducation()) {
-                        if (edu.getCourse() != null && edu.getCourse().toLowerCase().contains(reqBranch)) {
-                            branchMatched = true;
-                            break;
+                for (String rb : reqBranches) {
+                    String clean = rb.trim();
+                    if (clean.isEmpty()) continue;
+                    if (candidate.getBranch() != null && (candidate.getBranch().toLowerCase().contains(clean) || clean.contains(candidate.getBranch().toLowerCase()))) {
+                        branchMatched = true;
+                        break;
+                    }
+                    if (candidate.getEducation() != null) {
+                        for (var edu : candidate.getEducation()) {
+                            if (edu.getCourse() != null && (edu.getCourse().toLowerCase().contains(clean) || clean.contains(edu.getCourse().toLowerCase()))) {
+                                branchMatched = true;
+                                break;
+                            }
                         }
                     }
+                    if (branchMatched) break;
                 }
                 if (!branchMatched) {
                     throw new BadRequestException("Branch/Course criteria mismatch: " + drive.getEligibleBranch() + " required.");

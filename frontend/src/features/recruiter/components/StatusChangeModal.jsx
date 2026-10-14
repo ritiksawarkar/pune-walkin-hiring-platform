@@ -16,11 +16,31 @@ export function StatusChangeModal({
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
 
+  // Interview scheduling fields
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [venue, setVenue] = useState("");
+  const [meetingLink, setMeetingLink] = useState("");
+  const [reportingInstructions, setReportingInstructions] = useState("");
+
   useEffect(() => {
     if (application) {
       setNewStatus(application.status || "Shortlisted");
       setReason("");
       setNote("");
+
+      // Set default scheduled time to tomorrow 10:00 AM
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      d.setHours(10, 0, 0, 0);
+      const isoLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      setScheduledAt(isoLocal);
+
+      setVenue(application.drive?.venueAddress || application.driveVenue || "Tower B, Magarpatta Cybercity, Pune");
+      setMeetingLink("");
+      setReportingInstructions(
+        application.drive?.candidateInstructions ||
+        "Report 20 minutes before allocated slot. Carry original Govt photo ID (Aadhaar / PAN) & 2 printed resumes."
+      );
     }
   }, [application]);
 
@@ -28,7 +48,13 @@ export function StatusChangeModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onConfirm(application.id, newStatus, reason, note);
+    onConfirm(application.id, newStatus, reason, note, {
+      scheduledAt: scheduledAt ? scheduledAt + ":00" : null,
+      venueOrLocation: venue,
+      meetingLink,
+      reportingInstructions,
+      instructions: note,
+    });
   };
 
   return (
@@ -70,14 +96,48 @@ export function StatusChangeModal({
         </Input>
 
         {newStatus === "Interview Scheduled" && (
-          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900 flex items-start gap-2">
-            <AlertCircleIcon className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold">Interview Queue Handoff (Sahil)</p>
-              <p className="mt-0.5 text-indigo-800">
-                Marking this candidate as "Interview Scheduled" hands them off to Sahil's interview room scheduling, token verification, and evaluator scoring queue.
-              </p>
+          <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+            <div className="flex items-center gap-2 text-indigo-950">
+              <AlertCircleIcon className="h-4 w-4 text-indigo-600 shrink-0" />
+              <p className="font-bold text-xs">Interview Scheduling & Access Pass Details</p>
             </div>
+            <p className="text-2xs text-indigo-800">
+              Confirming this interview generates a unique QR-Code Access Pass, stores it in the database, notifies the candidate in-app, and dispatches an official confirmation email.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <Input
+                label="Interview Date & Time"
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                required
+              />
+              <Input
+                label="Virtual Meeting Link (Optional)"
+                type="url"
+                value={meetingLink}
+                onChange={(e) => setMeetingLink(e.target.value)}
+                placeholder="https://meet.google.com/xyz-abc"
+              />
+            </div>
+
+            <Input
+              label="Interview Venue Address"
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
+              placeholder="e.g. Tower B, Magarpatta Cybercity, Hadapsar, Pune - 411028"
+              required
+            />
+
+            <Input
+              label="Candidate Reporting Instructions"
+              as="textarea"
+              rows={2}
+              value={reportingInstructions}
+              onChange={(e) => setReportingInstructions(e.target.value)}
+              placeholder="e.g. Report 20 minutes before allocated slot. Carry Govt photo ID (Aadhaar / PAN) & 2 resumes."
+            />
           </div>
         )}
 

@@ -27,11 +27,14 @@ const STATUS_VARIANT = {
   Rejected: "danger",
 };
 
+import { interviewService } from "../../../services/interviewService";
+
 export function CandidateApplicationDetailsPage() {
   const { applicationId } = useParams();
   const { user } = useAuth();
 
   const [application, setApplication] = useState(null);
+  const [passInfo, setPassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -42,6 +45,18 @@ export function CandidateApplicationDetailsPage() {
         setError(null);
         const data = await candidateService.getApplicationById(applicationId, user);
         setApplication(data);
+
+        try {
+          const myInterviews = await interviewService.getMyInterviews();
+          const list = Array.isArray(myInterviews) ? myInterviews : (myInterviews?.content || []);
+          const match = list.find(i => i.application?.id === applicationId || i.id === applicationId);
+          if (match && match.id) {
+            const passRes = await interviewService.getInterviewPass(match.id);
+            if (passRes) setPassInfo(passRes);
+          }
+        } catch {
+          // Fallback to standard pass view
+        }
       } catch (err) {
         setError(err.message || "Application not found.");
       } finally {
@@ -102,6 +117,8 @@ export function CandidateApplicationDetailsPage() {
       <TokenPassCard
         application={application}
         drive={application.drive}
+        pass={passInfo}
+        qrBase64={passInfo?.qrBase64}
         onPrint={() => window.print()}
       />
 
